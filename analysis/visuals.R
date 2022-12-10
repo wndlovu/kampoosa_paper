@@ -21,6 +21,8 @@ library(scales)
 library(sf)
 library(usmap)
 library(rgdal)
+library(latex2exp)
+latex2exp_examples(cex = 1.3)
 options(scipen=999)
 
 # flux and salt application data
@@ -43,7 +45,7 @@ safe_colorblind_palette <- c("#88CCEE",  "grey", "navy", "#117733", "#999933", "
                              "#44AA99", "#999933", "#882255", "#661100", "orange")
 
 
-# replace all the negative cl export values at KB175 with 0
+
 monthlyFull_tve_export <- monthlyFull %>% 
   pivot_longer(cols = c(monthSaltapplied, monthlyCl_kb175_corrected), names_to = 'salt_name', values_to = 'salt_value')
 
@@ -55,11 +57,10 @@ monthyear <- as.data.frame(monthlyFull$monthYear) %>%
 
 # CHLORIDE ACCUMALATION, APPLICATION AND EXPORT
 
-#jpeg("clAppl_exp_accum.jpg", units="in", width=12, height=8, res=300)
 clAppl_exp_accum <- ggplot(monthlyFull_tve_export, aes(x = monthYear))+
   geom_bar(aes(y=salt_value, fill = salt_name),stat = "identity", position = position_dodge(width =0.035), width =.1, color = 'black')+
   geom_vline(xintercept =as.yearmon(c("Oct 2019", "Oct 2018", "Oct 2020")), colour = "grey20", alpha = .9, size = .5, linetype = "dashed") +
-  geom_line(aes(y = Mfen/2.5), color = "brown4", alpha = .9, size=.9)+
+  geom_line(aes(y = Mfen_corrected/2.5), color = "brown4", alpha = .9, size=.9)+
   theme(axis.title.x = element_blank(),
         legend.title = element_blank(),
         panel.grid.major = element_blank(),
@@ -68,17 +69,18 @@ clAppl_exp_accum <- ggplot(monthlyFull_tve_export, aes(x = monthYear))+
         axis.title = element_text(size = 24),
         axis.text.y = element_text(size = 14),
         legend.text =element_text(size = 13), 
-        legend.position=c(.9,.4),
+        legend.position=c(.9,.943),
         legend.background = element_rect(fill = "white", colour = "grey", size =.2),
         panel.background = element_rect(fill = "white", colour = "black", size =1))+
   scale_color_manual(values = "brown4", labels = '')+
-  scale_fill_manual(values = c("gray90", "#56B4E9"), labels = c("Outflux (KB175)", "Applied to I-90"))+
+  scale_fill_manual(values = c("gray90", "steelblue3"), labels = c("Outflux (KB175)", "Applied to I-90"))+ ##56B4E9
   scale_x_yearmon(breaks = monthyear$monthYear, expand = expansion(mult = c(0, 0)))+
-  scale_y_continuous(expand = expansion(mult = c(0, .15),add = c(0, 0)),
-                     sec.axis = sec_axis(~.*2.5, breaks = seq(0,420000,50000), name = "Chloride Accumulation in fen (kg)"))+
-  annotate("text", as.yearmon("Apr 2018"), y = 137000, label = "2018", colour = "black", size = 6)+
-  annotate("text", as.yearmon("Apr 2019"), y = 137000, label =  "2019", colour = "black", size = 6)+
-  annotate("text", as.yearmon("May 2020"), y = 137000, label =  "2020", colour = "black", size = 6)+
+  scale_y_continuous(breaks = seq(0,140000,20000), 
+                     expand = expansion(mult = c(0, .15),add = c(0, 0)),
+                     sec.axis = sec_axis(~.*2.5, breaks = seq(0,350000,50000), name = "Chloride Accumulation in fen (kg)"))+
+  annotate("text", as.yearmon("Apr 2018"), y = 105000, label = "2018", colour = "black", size = 6)+
+  annotate("text", as.yearmon("Apr 2019"), y = 105000, label =  "2019", colour = "black", size = 6)+
+  annotate("text", as.yearmon("May 2020"), y = 105000, label =  "2020", colour = "black", size = 6)+
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5),
         axis.text.y.right = element_text(size = 15, color = "brown4"),
         axis.line.y.right = element_line(color = "brown4"),
@@ -109,7 +111,7 @@ discharge_direction<- ggplot(dailyScaleFull, aes(x= date))+
         axis.text.x = element_text(angle = 90),
         panel.grid.major = element_blank(),
         panel.grid.minor=element_blank(),
-        legend.position=c(.9,.89),
+        legend.position=c(.9,.92),
         legend.background = element_rect(fill = "white", color = "grey"),
         legend.key = element_rect(fill = "white"),
         legend.key.size = unit(.5, 'cm'),#,
@@ -122,24 +124,25 @@ discharge_direction<- ggplot(dailyScaleFull, aes(x= date))+
 
 ## How does groundwater chemistry vary spatial and with time?
 ## Is there a relationship between discharge at the exit point and groundwater chemistry
-wellsPivoted_cl <- wellsPivoted %>%  
+wellsPivoted_cl <- wellsPivoted %>% 
   filter(type == "Cl_mgL",
+         WellDepth_ft > 0,
          !is.na (concentration),
          Date <= "2020-09-30")  
 
 gw_cl_discharge <- ggplot()+
-  geom_point(data = wellsPivoted_cl, aes(x= Date, y = concentration, color = depth), size = 1.5)+ #used size=2.9
-  geom_line(data = dailyScaleFull, aes(x = date, y = dailyCFS_KB175/.8), color = "black")+ # set scale for second y axis #grey90
-  scale_color_manual(values=c("#56B4E9","#E69F00",  "#999999"))+
-  geom_smooth(data = wellsPivoted_cl, aes(x= Date, y = concentration, color = depth), method = "lm", size = 1, se = FALSE)+
+  geom_point(data = wellsPivoted_cl, aes(x= Date, y = concentration, color = as.factor(WellDepth_ft)), size = 1.5)+ #used size=2.9
+  geom_line(data = dailyScaleFull, aes(x = date, y = dailyCFS_KB100/.9), color = "black")+ # set scale for second y axis #grey90
+  scale_color_manual(values=c("steelblue3","#E69F00",  "#999999"), labels = c("5ft", "10ft", "15ft"))+
+  geom_smooth(data = wellsPivoted_cl, aes(x= Date, y = concentration, color = as.factor(WellDepth_ft)), method = "lm", size = .6, se = FALSE)+
   geom_line(size = 1)+ #used size =2
-  annotate("label", as.Date("2020-01-01"), y = 32, label = "Discharge KB-300 (cfs)", colour = "black", size = 3.8, face = "bold")+
-  geom_line(data = wellsPivoted_cl, aes(x= Date, y = concentration, color = depth),size = .5)+ #used size =2
+  #annotate("label", as.Date("2020-01-01"), y = 32, label = "Discharge KB-300 (cfs)", colour = "black", size = 3.8, face = "bold")+
+  geom_line(data = wellsPivoted_cl, aes(x= Date, y = concentration, color = as.factor(WellDepth_ft)),size = .5)+ #used size =2
   facet_wrap(~IDgroup, nrow = 1, scales = "free")+
   scale_y_continuous(limits = c(0, 230), 
                      breaks = c(0, 25, 50, 75, 100, 125, 150, 175, 200, 225),
-                     sec.axis = sec_axis(~.*.8, name = "", breaks = c(0,10,20,30,40,50)))+
-  scale_x_date(breaks = "2 month")+
+                     sec.axis = sec_axis(~.*.9, name = "Discharge KB-100 (cfs)", breaks = c(0,20,40,60)))+ #, breaks = c(0,20,40,60)
+  scale_x_date(breaks = "4 month")+
   theme(
     axis.text.x = element_text(angle=90, size = 12),
     axis.text.y = element_text(size = 14),
@@ -148,32 +151,72 @@ gw_cl_discharge <- ggplot()+
     panel.spacing = unit(1.2, "lines"),
     panel.grid.major = element_blank(),
     panel.grid.minor=element_blank(),
+    axis.title.y.right = element_text(angle = 90, hjust = .02, size = 14, color = 'black'),
+    axis.text.y.right = element_text(size = 15, color = "black"),
+    axis.line.y.right = element_line(color = "black"),
+    axis.ticks.y.right = element_line(color = "black"),
+    #axis.title.y.right=element_text(colour="brown4", angle = 90))+
+    #axis.title.y.left = element_text(angle = 90, hjust = .2),
     legend.title =  element_text(size=15),
     axis.title = element_text(size = 18),
     strip.background = element_blank(),
     legend.key = element_rect(fill = "white"),
     strip.text = element_text(size=18),
-    legend.position=c(.93,.85),
-    legend.background = element_rect(fill = "white", colour = "grey", size =.2))+
-  labs(y = "Cl concentration (mg/L)",
+    legend.position=c(.95,.86),
+    legend.background = element_rect(fill = "white", colour = "grey", size =.2),
+    panel.background = element_rect(fill = "white", colour = "black", size =1))+
+  labs(y =  expression("Cl"^-{}*" (mg/L)"), #expression("Cl^-{}* concentration (mg/L)")
        x = "",
-       color = "Well depth")+
-  theme(panel.background = element_rect(fill = "white", colour = "black", size =1))
+       color = "Well depth")
+
+
+## How do average mean concentration change with depth? (Compare to Rhodes and Guswa (2016))
+wellsPivoted_cl_mean <- wellsPivoted %>% 
+  filter(!is.na (concentration),
+         Date <= "2020-09-30") %>% 
+  group_by(IDgroup, depth) %>% 
+  summarise(avg_cl = mean(concentration)) %>% 
+  mutate(WellDepth_ft = case_when(depth == "0ft"   ~ 0,
+                                  depth == "5ft"   ~ 5,
+                                  depth == "10ft"   ~ 10,
+                                  depth == "15ft"   ~ 15),
+         avg_cl_umolL = ((avg_cl/35.453)*1000), # convert to mols, but we'll use mg/L if visual is included in paper (supplement?)
+         depth_m = WellDepth_ft*0.3048)
+
+
+ggplot(wellsPivoted_cl_mean, aes(x = -depth_m, y = avg_cl_umolL, color = IDgroup))+
+  geom_point(size = 7)+
+  geom_line(size = 2)+
+  labs(y = 'Cl concentration (umol/L)',
+       x = 'Well depth (m)')+
+  coord_flip()
+
+# show general trend in Cl concentrations at all the 
 
 
 # DISCHARGE - MASS FLUX RELATIONSHIPS
 # What drives chloride flusing/outflux?
 # Is there a relationship between mass flux and discharge?
 ## monthly discharge and cl export
-
+monthlyFull <- monthlyFull %>% 
+  drop_na(monthYear)
 labs <- as.character(monthlyFull$monthYear) # month labels
+
+
+# equation of line
+formula1 <- y~x
+
+# corrected kb100 vals
 
 dischFlux_labels <- monthlyFull %>% 
   filter(monthYear <= "Sep 2020") %>% 
-  ggplot(aes(x = monthDischargeKB175_corrected, y= monthlyCl_kb175_corrected)) +
+  ggplot(aes(x = monthDischargeKB100, y= monthlyCl_kb100)) +
   geom_point(aes(color = Season), alpha = .7, size = 2)+
-  geom_smooth(method = "lm", color = "black",se = TRUE)+
+  geom_smooth(aes(fill = monthlyCl_kb100), method = "lm", color = "black",se = TRUE, formula = formula1)+
+  geom_smooth(aes(fill = monthlyCl_kb100), method=lm, se=FALSE, formula=y~x-1, color = 'navy', linetype = "dashed",  alpha = .3, size = .7)+
   scale_color_manual(values = c("black", "#88CCEE", "darkgoldenrod", "red4"))+
+  scale_y_continuous(breaks = seq(0,50000,10000))+
+  scale_x_continuous(breaks = seq(0,8,2))+
   theme(axis.text.x = element_text(size = 14),
         axis.text.y = element_text(size = 14),
         panel.grid.major = element_blank(),
@@ -188,18 +231,46 @@ dischFlux_labels <- monthlyFull %>%
     legend.title = element_text(size = 15))+
   theme(panel.background = element_rect(fill = "white", colour = "black", size =1))+
   geom_label_repel(data = monthlyFull , aes(label = labs, color = Season), size = 4.5, show.legend = FALSE)+
-  labs(x = "Discharge at KB175 (cfs)",
-       y = "Chloride Mass Flux at KB175 (kilograms)")
+  labs(x = "Monthly Discharge at KB100 (cfs)",
+       y = "Monthly Chloride Mass Flux at KB100 (kilograms)")
 
 
-# equation of line
-formula1 <- y~x
+monthlyFull %>% 
+  filter(monthYear <= "Sep 2020") %>% 
+  ggplot(aes(x = monthDischargeKB150, y= monthlyCl_kb150)) +
+  geom_point(aes(color = Season), alpha = .7, size = 2)+
+  geom_smooth(aes(fill = monthlyCl_kb150), method = "lm", color = "black",se = TRUE, formula = formula1)+
+  geom_smooth(aes(fill = monthlyCl_kb150), method=lm, se=FALSE, formula=y~x-1, color = 'navy', linetype = "dashed",  alpha = .3, size = .7)+
+  scale_color_manual(values = c("black", "#88CCEE", "darkgoldenrod", "red4"))+
+  scale_y_continuous(breaks = seq(0,50000,10000))+
+  scale_x_continuous(breaks = seq(0,8,2))+
+  theme(axis.text.x = element_text(size = 14),
+        axis.text.y = element_text(size = 14),
+        panel.grid.major = element_blank(),
+        panel.grid.minor=element_blank(),
+        legend.position=c(.9,.2),
+        legend.background = element_rect(fill = "white", colour = "grey", size =.2))+
+  theme(
+    axis.title.x = element_text(size = 20),
+    axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0), size = 20),
+    legend.key.size = unit(.8, 'cm'),
+    legend.text = element_text(size = 14),
+    legend.title = element_text(size = 15))+
+  theme(panel.background = element_rect(fill = "white", colour = "black", size =1))+
+  geom_label_repel(data = monthlyFull , aes(label = labs, color = Season), size = 4.5, show.legend = FALSE)+
+  labs(x = "Discharge at KB150 (cfs)",
+       y = "Chloride Mass Flux at KB150 (kilograms)")
+
+
+
 
 dischFlux_nolabels <- monthlyFull %>% 
   filter(monthYear <= "Sep 2020") %>% 
-  ggplot(aes(x = monthDischargeKB175, y= monthlyCl_kb175)) +
+  ggplot(aes(x = monthDischargeKB100, y= monthlyCl_kb100)) +
   geom_point(alpha = .7, size = 2)+
   geom_smooth(method = "lm", color = "black",se = TRUE, formula = formula1)+
+  scale_y_continuous(breaks = seq(0,50000,10000))+
+  scale_x_continuous(breaks = seq(0,8,2))+
   stat_poly_eq(aes(label = paste(..eq.label.., sep = "~~~")), 
                label.x.npc = "right", label.y.npc = 0.15,
                eq.with.lhs = "italic(hat(y))~`=`~",
@@ -221,8 +292,49 @@ dischFlux_nolabels <- monthlyFull %>%
     legend.text = element_text(size = 14),
     legend.title = element_text(size = 15))+
   theme(panel.background = element_rect(fill = "white", colour = "black", size =1))+
-  labs(x = "Discharge at KB175 (cfs)",
-       y = "Chloride Mass Flux at KB175 (kilograms)")
+  labs(x = "Monthly Discharge at KB100 (cfs)",
+       y = "Monthly Chloride Mass Flux at KB100 (kilograms)")
+
+# discharge no labels kb100, but highlight March and Nov 2018
+monthlyFull_outliers <- monthlyFull %>% 
+  filter(monthYear == "Mar 2018" | monthYear == "Nov 2018") 
+
+labs2 <- as.character(monthlyFull_outliers$monthYear)
+
+dischFlux_nolabels_outliers <- monthlyFull %>% 
+  filter(monthYear <= "Sep 2020") %>% 
+  ggplot(aes(x = monthDischargeKB100, y= monthlyCl_kb100)) +
+  geom_point(alpha = .7, size = 2)+
+  geom_point(data = monthlyFull_outliers, aes(x = monthDischargeKB100, y= monthlyCl_kb100), size = 2.5, color = "darkgoldenrod")+
+  scale_y_continuous(breaks = seq(0,50000,10000))+
+  scale_x_continuous(breaks = seq(0,8,2))+
+  geom_label_repel(data = monthlyFull_outliers, aes(label = labs2), size = 6, show.legend = FALSE, nudge_y = -500,
+                   nudge_x = .5)+
+  geom_smooth(data = monthlyFull, method = "lm", color = "black",se = TRUE, formula = formula1)+
+  stat_poly_eq(aes(label = paste(..eq.label.., sep = "~~~")), 
+               label.x.npc = "right", label.y.npc = 0.15,
+               eq.with.lhs = "italic(hat(y))~`=`~",
+               eq.x.rhs = "~italic(x)",
+               formula = formula1, parse = TRUE, size = 7) +
+  stat_poly_eq(aes(label = paste(..rr.label.., sep = "~~~")), 
+               label.x.npc = "right", label.y.npc = "bottom",
+               formula = formula1, parse = TRUE, size = 7) +
+  theme(axis.text.x = element_text(size = 14),
+        axis.text.y = element_text(size = 14),
+        panel.grid.major = element_blank(),
+        panel.grid.minor=element_blank(),
+        legend.position=c(.9,.2),
+        legend.background = element_rect(fill = "white", colour = "grey", size =.2))+
+  theme(
+    axis.title.x = element_text(size = 20),
+    axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0), size = 20),
+    legend.key.size = unit(.8, 'cm'),
+    legend.text = element_text(size = 14),
+    legend.title = element_text(size = 15))+
+  theme(panel.background = element_rect(fill = "white", colour = "black", size =1))+
+  labs(x = "Monthly Discharge at KB100 (cfs)",
+       y = "Monthly Chloride Mass Flux at KB100 (kilograms)")
+
 
 
 # AIR AND WATER TEMP, PRECIPITATION
@@ -264,12 +376,46 @@ air_temp <- function(water_yr){
 
 airtemp18 <- air_temp(water_yr = 2018)
 airtemp19 <- air_temp(water_yr = 2019)
-airtemp20 <- air_temp(water_yr = 2020)
+
+airtemp20 <- air_temp(water_yr = 2020)+
+  theme(legend.justification=c(1,0),legend.position=c(1,0),
+        axis.text.x = element_text(angle = 90),
+        #legend.background = element_rect(fill = "white", color = "black"),
+        legend.key.size = unit(1.5, 'cm'),#,
+        legend.text = element_text(size=19))
 
 
 air_temp_grid <- plot_grid(airtemp18, airtemp19,airtemp20, ncol = 3, nrow=1, align = "v")
 
-
+air_temp_time_series <- ggplot(dailyScaleFull, aes(x= date))+
+  geom_line(aes(y = daily_ave_air_temp, color = "Air Temp"), size = 1.5)+
+  geom_line(aes(y = daily_ave_water_temp, color = "Water Temp"), size = 1.5)+
+  geom_tile(aes(y = monthlyMaxRange - rain_inch/monthlyCoeff/2, # set scale for second y axis
+                height = rain_inch/monthlyCoeff, 
+                fill = 'PColor'), fill = "black", width = 2.5)+
+  scale_y_continuous(name = "Temperature (°C)",
+                     limit = c(-25, monthlyMaxRange),
+                     expand = c(0, 0),
+                     sec.axis = sec_axis(trans = ~(.-monthlyMaxRange)*-monthlyCoeff,
+                                         name = "Precipitation (inches)", breaks = c(0,1,2,3,4)))+
+  scale_x_date(labels = scales::date_format("%b %Y"), date_breaks = "2 month")+
+  theme_clean()+
+  theme_classic(base_size = 24)+
+  scale_color_manual(values = c("black", "grey"))+
+  #scale_x_date(date_breaks = "4 week")+
+  theme(
+    legend.title = element_blank(),
+    axis.title.x = element_blank(),
+    axis.title.y.right = element_text(angle = 90, hjust = 1.05),
+    axis.title.y.left = element_text(angle = 90, hjust = .2),
+    axis.title.y = element_text(),
+    legend.justification=c(1,0),legend.position=c(1,0),
+    axis.text.x = element_text(angle = 90),
+    #legend.background = element_rect(fill = "white", color = "black"),
+    legend.key.size = unit(1.5, 'cm'),#,
+    legend.text = element_text(size=19),
+    plot.title = element_text(hjust = 0.5))+
+  labs(title = "")
 
 
 
@@ -279,6 +425,7 @@ air_temp_grid <- plot_grid(airtemp18, airtemp19,airtemp20, ncol = 3, nrow=1, ali
 site <- data.frame(lat = 42.308301, lon = -73.323011) 
 
 transf <- usmap_transform(site)
+
 MainStates <- map_data("state") %>% 
   filter(region == "massachusetts",
          subregion == "main")
@@ -296,8 +443,14 @@ location <- ggplot() +
 
 
 # save all figures
-img <- list(location=location, discharge_chloride_flux_KB175_nolabels=dischFlux_nolabels, discharge_chloride_flux_KB175_labels=dischFlux_labels,
-            groundwater_chloride_concentration_discharge_KB175=gw_cl_discharge, discharge_direction_mvt_of_water_between_fen_and_brook=discharge_direction, #air_water_temp_precipitation_grid = air_temp_grid,
+img <- list(air_water_temp_precipitation_time_series = air_temp_time_series,
+  air_water_temp_precipitation_grid = air_temp_grid,
+            location=location, 
+  discharge_chloride_flux_KB100_nolabels_outliers=dischFlux_nolabels_outliers,
+  discharge_chloride_flux_KB100_nolabels=dischFlux_nolabels,
+  discharge_chloride_flux_KB100_labels=dischFlux_labels,
+  groundwater_chloride_concentration_discharge_KB100=gw_cl_discharge, 
+  discharge_direction_mvt_of_water_between_fen_and_brook=discharge_direction, 
             monthly_chloride_application_export_accumulation=clAppl_exp_accum)
 
 
@@ -312,6 +465,6 @@ to_print <- tibble(
 walk2(
   to_print$img, to_print$path,
   ~ggsave(filename = .y, plot = .x,  # width 12 and height 8
-          width = 12, height = 8, dpi = 300, limitsize = FALSE) # width = 20, height = 8 for graph temp graphs
-  # width = 20, height = 8 for other graphs
+          width = 14, height = 8, dpi = 400, limitsize = FALSE) # width = 22, height = 8 for graph temp graphs
+  # width = 12, height = 8 for other graphs
 )

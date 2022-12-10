@@ -4,6 +4,10 @@ library(lubridate)
 library(gtools)
 library(zoo)
 library(stringr)
+library(forecast)
+library(fable)
+library(kernlab)
+library(e1071)
 options(scipen=999)
 
 
@@ -98,8 +102,9 @@ pet <- data.frame(month, albany, hartford) # potential evapotranspiration df
 
 pet <- pet %>%
   group_by(month) %>% 
-  summarise(avg_pet = ((albany+hartford)/2)) %>% 
-  pivot_wider(names_from = month, values_from = avg_pet) %>% 
+  mutate(avg_pet = ((albany+hartford)/2)) %>% 
+  select(month, avg_pet) %>% 
+  tidyr::pivot_wider(names_from = month, values_from = avg_pet) %>% 
   mutate(jan_daily_avgPET = (`1`/31),
          feb_daily_avgPET = (`2`/28),
          feb_daily_avgPET_leapyear = (`2`/29),
@@ -248,9 +253,10 @@ daily_vals_full <- gauges_full %>%
             totalClkg_KB175 = sum(periodClkg_KB175),
             totalClkg_KB175_corrected = sum(periodClkg_KB175_corrected),
             totalClkg_KB300 = sum(periodClkg_KB300)) %>% 
-  mutate(year = year(date),
-         month = month(date),
-         day = day(date)) %>% 
+  #ungroup() %>% 
+  mutate(year = lubridate::year(date),
+         month = lubridate::month(date),
+         day = lubridate::day(date)) %>% 
   left_join(rainfall_full, by = c("date" = "date")) %>%  #use right left because rainfall data is collected from 2017-11-01 and gauge data from 2017-11-15
   left_join(pet_NonLeapYear, by = c("month" = "month")) %>%   # join PEt df 
   mutate(avg_PET=ifelse((date >= 	as.Date("2020-02-01") & date <= as.Date("2020-02-29")), pet_LeapYear$avg_PET, avg_PET), # replace Feb 2020 AvgPET with calculated leap year value
@@ -258,6 +264,10 @@ daily_vals_full <- gauges_full %>%
          AvgPET_ft_s = (avg_PET* (9.645061728395 * (10^-7)))) %>% #daily potential evapotranspiration ft/s
   left_join(dailyAirTemp, by = 'date') %>% 
   left_join(dailyWaterTemp, by = 'date')
+
+
+p <- daily_vals_full %>% 
+ arrange(totalClkg_KB175)
 
 
 ## Assume water and salt from the fen move into the brook (kb300 channel in the wetland), so split the wetland into the brook and the fen. 
@@ -308,7 +318,38 @@ daily_vals_full <- daily_vals_full %>%
 
 
 
+## beaver dam at KB100 during the MAY, JUNE AND JULY 2020, so calculate discharge and mass flux 
+# data non -linear
 
+# MODELING DISCHARGE FOR THE MAY, JUNE AND JULY 2020 OUTLIERS
+# discharge at KB100 was affected by a beaver dam discovered on the 19th of May by the UMass team. The calculations for
+# the dischrge was not adjusted, so we will predict discharge at kb100 using discharge at kb150 and kb300
+
+
+#first filter for data prior to the May 2020
+
+# time series data, so this should violate some assumption - normality, constant variane and zero mean assumptions violated
+dailyScaleFull_beforeBeaverDam <- daily_vals_full %>% 
+  filter(date < "2020-05-01") %>% 
+  drop_na()
+
+
+daily_kb100Discharge_lm1 <- lm(dailyCFS_KB100 ~ dailyCFS_KB150 + dailyCFS_KB300, data = dailyScaleFull_beforeBeaverDam, na.action=na.exclude)
+summary(daily_kb100Discharge_lm1)
+performance::check_model(daily_kb100Discharge_lm1) # varience increases when fitted values increase
+
+
+daily_kb100Discharge_lm2 <- lm(dailyCFS_KB100 ~ dailyCFS_KB300, data = dailyScaleFull_beforeBeaverDam, na.action=na.exclude)
+summary(daily_kb100Discharge_lm2)
+performance::check_model(daily_kb100Discharge_lm2) # varience increases when fitted values increase
+
+
+daily_kb100Discharge_lm3 <- lm(dailyCFS_KB100 ~ dailyCFS_KB150, data = dailyScaleFull_beforeBeaverDam, na.action=na.exclude)
+summary(daily_kb100Discharge_lm3)
+performance::check_model(daily_kb100Discharge_lm3)
+
+
+## approach 2 - use monthly data
 
 ## MONTHLY SCALE
 monthlyFull <- daily_vals_full %>% 
@@ -328,24 +369,183 @@ monthlyFull <- daily_vals_full %>%
             monthSaltapplied = sum(applied_cl, na.rm = TRUE),
             totalmonthPrecip = sum(rain_inch, na.rm = TRUE),
             monthETP = sum(avg_PET, na.rm = TRUE),
-            monthlyQfen = mean(Qfen, na.rm = TRUE)) %>% 
+            monthlyQfen = mean(Qfen, na.rm = TRUE)) 
+  
+
+monthly_before_beaverDam <- monthlyFull %>% 
+  filter(monthYear <= "Apr 2020")
+
+# force the linear model to pass through origin because the true relationship between dischargekb100 and dischargekb300 & dischargekb150 
+# is ?????
+
+monthly_lm1 <- lm(monthDischargeKB100 ~ 0 + monthDischargeKB150 + monthDischargeKB300, data = monthly_before_beaverDam)
+summary(monthly_lm1)
+performance::check_model(monthly_lm1)
+sqrt(mean(monthly_lm1$residuals^2))
+# r2 = 0.9582, rmse = 0.9011523 best fit
+
+
+monthly_lm2 <- lm(monthDischargeKB100 ~  0 + monthDischargeKB300, data = monthly_before_beaverDam)
+summary(monthly_lm2)
+performance::check_model(monthly_lm2)
+sqrt(mean(monthly_lm2$residuals^2))
+# r2 = 0.922, rmse = 1.230303
+
+monthly_lm3 <- lm(monthDischargeKB100 ~ 0 + monthDischargeKB150, data = monthly_before_beaverDam)
+summary(monthly_lm3)
+performance::check_model(monthly_lm2)
+sqrt(mean(monthly_lm3$residuals^2))
+#r2 = 0.9504, rmse = 0.9810107
+
+
+# Calculate values for the different models 
+# assuming 0 intercept for best fit for all models
+
+monthlyFull_lmCalcs <- monthlyFull %>% 
+  mutate(monthDischargeKB100_kb300_pluskb150 =  1.8652*monthDischargeKB150 + 1.6430*monthDischargeKB300,
+         monthDischargeKB100_kb300 =  5.0491*monthDischargeKB300,
+         monthDischargeKB100_kb150 =  2.6936*monthDischargeKB150)
+
+
+
+#visualise dicharge at KB100 - using three models
+## scatterplot showing predicted discharge using the three models
+# remove May, June 
+safe_colorblind_palette <- c("#88CCEE",  "grey", "navy", "#117733", "#999933", "#AA4499", "black", 
+                             "#44AA99", "#999933", "#882255", "#661100", "orange")
+
+monthlyFull_after_beaverDam2 = monthlyFull_lmCalcs %>% 
+  filter(monthYear > "June 2020")
+
+ggplot(data = monthlyFull_after_beaverDam2, aes(x = monthDischargeKB100))+
+  geom_point(aes(y = monthDischargeKB100, color = "monthDischargeKB100"))+
+  geom_line(aes(y = monthDischargeKB100, color = "monthDischargeKB100"))+
+  geom_point(aes(y = monthDischargeKB100_kb300_pluskb150, color = "monthDischargeKB100_kb300_pluskb150"))+
+  geom_line(aes(y = monthDischargeKB100_kb300_pluskb150, color = "monthDischargeKB100_kb300_pluskb150"))+
+  geom_point(aes(y = monthDischargeKB100_kb300, color = "monthDischargeKB100_kb300"))+
+  geom_line(aes(y = monthDischargeKB100_kb300, color = "monthDischargeKB100_kb300"))+
+  geom_point(aes(y = monthDischargeKB100_kb150, color = "monthDischargeKB100_kb150"))+
+  geom_line(aes(y = monthDischargeKB100_kb150, color = "monthDischargeKB100_kb150"))+
+  scale_color_manual(values = safe_colorblind_palette)
+
+
+
+
+# general model fits for full df
+ggplot(monthlyFull_lmCalcs, aes(x = monthYear))+
+  geom_point(aes(y = monthDischargeKB100, color = "monthDischargeKB100"))+
+  geom_line(aes(y = monthDischargeKB100, color = "monthDischargeKB100"))+
+  geom_point(aes(y = monthDischargeKB100_kb300_pluskb150, color = "monthDischargeKB100_kb300_pluskb150"))+
+  geom_line(aes(y = monthDischargeKB100_kb300_pluskb150, color = "monthDischargeKB100_kb300_pluskb150"))+
+  geom_point(aes(y = monthDischargeKB100_kb300, color = "monthDischargeKB100_kb300"))+
+  geom_line(aes(y = monthDischargeKB100_kb300, color = "monthDischargeKB100_kb300"))+
+  geom_point(aes(y = monthDischargeKB100_kb150, color = "monthDischargeKB100_kb150"))+
+  geom_line(aes(y = monthDischargeKB100_kb150, color = "monthDischargeKB100_kb150"))+
+  scale_color_manual(values = safe_colorblind_palette)
+
+
+
+# recalculate monthly chloride flux at KB100 for MAY, JUNE AND JULY 2020 OUTLIERS using 2 different methods to validate calcs
+
+# df with the dates not affected by beaver dam
+monthlyFull_lmCalcs_non_bvd <- monthlyFull %>% 
+  filter(monthYear < "May 2020" | monthYear > "July 2020")
+
+# method 1: assume that the corrected Cl flux (kg/month) at KB100 can be obtained by multiplying the 
+#           erroneous Cl flux by the ratio of the estimated monthly discharge to the erroneous monthly discharge. 
+
+#M_corrected = M_erroneous * (Q_estimated/Q_erroneous) where Q_estimated = monthDischargeKB100_kb300_pluskb150
+# and Q_erroneous = original data monthDischargeKB100
+
+
+# calculate M_corrected - monthlyFull_lmCalcs_bdm beaver dam months 
+monthlyFull_lmCalcs_bdm1 <- monthlyFull_lmCalcs %>% 
+  filter(between(monthYear, as.yearmon("May 2020"), as.yearmon("July 2020"))) %>% 
+  mutate(Q_estimated_Q_erroneous = monthDischargeKB100_kb300_pluskb150/monthDischargeKB100,
+         monthlyCl_kb100_corrected = Q_estimated_Q_erroneous*monthlyCl_kb100)%>% 
+  select(monthYear, monthDischargeKB100, monthDischargeKB100_kb300_pluskb150, monthlyCl_kb100, monthlyCl_kb100_corrected)
+
+
+
+# method 2: calculate the average Cl concentration for each month (a simple arithmetic average, denoted <Cl>).  
+#Corrected salt flu is then calculated as
+
+# M_corrected = <Cl> * Q_estimated
+
+# assumption is the beaver dam doesn't affect the concentration of the water
+monthlyFull_lmCalcs_bdm2 <- monthlyFull_lmCalcs %>% 
+  mutate(monthClConc_kb100 = ((monthlyCl_kb100*1000000)/(monthDischargeKB100*31536000))/28.316,
+         monthCl_kb100_corrected = ((monthClConc_kb100*(monthDischargeKB100_kb300_pluskb150)*28.3168)/1000000)*31536000) %>% 
+  filter(between(monthYear, as.yearmon("May 2020"), as.yearmon("July 2020"))) %>%  # filter for months affected by beaver dam
+  select(monthYear, monthDischargeKB100, monthDischargeKB100_kb300_pluskb150, monthlyCl_kb100, monthCl_kb100_corrected)
+
+
+# getting similar results, using df from the ratios method.
+# make new monthly Full df with the corrected kb100 data and recalculate kb175 data, cl storage and flux
+
+
+# replace the values for flux and discharge during beaver dam months for KB100 and KB175 in monthly Full
+
+# discharge kb100
+monthlyFull$monthDischargeKB100[monthlyFull$monthYear == "May 2020"] <- 1.7993306
+monthlyFull$monthDischargeKB100[monthlyFull$monthYear == "Jun 2020"] <- 0.2540679
+monthlyFull$monthDischargeKB100[monthlyFull$monthYear == "Jul 2020"] <- 0.2715204
+
+# cl flux kb100
+monthlyFull$monthlyCl_kb100[monthlyFull$monthYear == "May 2020"] <- 15708.612
+monthlyFull$monthlyCl_kb100[monthlyFull$monthYear == "Jun 2020"] <- 2424.462
+monthlyFull$monthlyCl_kb100[monthlyFull$monthYear == "Jul 2020"] <- 2029.921
+
+# recalculate discharge and cl mass flux for kb175
+kb175_recalc <- monthlyFull %>% 
+  mutate(kb175_discharge = monthDischargeKB100 - monthDischargeKB150,
+         kb175_cl_flux = monthlyCl_kb100 - monthlyCl_kb150) %>% 
+  filter(monthYear == c("May 2020", "Jun 2020", "Jul 2020")) %>% 
+  select(monthYear, kb175_discharge, kb175_cl_flux)
+
+
+
+# discharge kb175
+monthlyFull$monthDischargeKB175[monthlyFull$monthYear == "May 2020"] <- 1.1424988
+monthlyFull$monthDischargeKB175[monthlyFull$monthYear == "Jun 2020"] <- 0.2011358
+monthlyFull$monthDischargeKB175[monthlyFull$monthYear == "Jul 2020"] <- 0.1930910
+
+# discharge kb175_corrected
+monthlyFull$monthDischargeKB175_corrected[monthlyFull$monthYear == "May 2020"] <- 1.1424988
+monthlyFull$monthDischargeKB175_corrected[monthlyFull$monthYear == "Jun 2020"] <- 0.2011358
+monthlyFull$monthDischargeKB175_corrected[monthlyFull$monthYear == "Jul 2020"] <- 0.1930910
+
+# cl flux kb175
+monthlyFull$monthlyCl_kb175[monthlyFull$monthYear == "May 2020"] <- 7904.9976
+monthlyFull$monthlyCl_kb175[monthlyFull$monthYear == "Jun 2020"] <- 1500.2568
+monthlyFull$monthlyCl_kb175[monthlyFull$monthYear == "Jul 2020"] <- 765.9316  
+
+
+# cl flux kb175_corrected
+monthlyFull$monthlyCl_kb175_corrected[monthlyFull$monthYear == "May 2020"] <- 7904.9976
+monthlyFull$monthlyCl_kb175_corrected[monthlyFull$monthYear == "Jun 2020"] <- 1500.2568
+monthlyFull$monthlyCl_kb175_corrected[monthlyFull$monthYear == "Jul 2020"] <- 765.9316  
+
+
+monthlyFull <- monthlyFull %>% 
   mutate(
-         dMfen = (((monthSaltapplied*0.91) + monthlyCl_kb300) - monthlyCl_kb175), # change back to monthlyClkg_KB175 
-         dMfen_corrected = (((monthSaltapplied*0.91) + monthlyCl_kb300) - monthlyCl_kb175_corrected), # change back to monthlyClkg_KB175 
-         rownum = row_number(),
-         Month = as.Date(monthYear),
-         Month = month(Month),
-         Season = case_when(Month > as.numeric("5") & Month < as.numeric("9") ~ "summer",
-                            Month > as.numeric("2") & Month < as.numeric("6") ~ "spring",
-                            Month == as.numeric("12") | Month == as.numeric("1") | Month == as.numeric("2")  ~ "winter",
-                            Month > as.numeric("8") & Month < as.numeric("12") ~ "fall"
-         )) %>% 
+    dMfen = (((monthSaltapplied*0.91) + monthlyCl_kb300) - monthlyCl_kb175), # change back to monthlyClkg_KB175 
+    dMfen_corrected = (((monthSaltapplied*0.91) + monthlyCl_kb300) - monthlyCl_kb175_corrected), # change back to monthlyClkg_KB175 
+    rownum = row_number(),
+    Month = as.Date(monthYear),
+    Month = month(Month),
+    Season = case_when(Month > as.numeric("5") & Month < as.numeric("9") ~ "summer",
+                       Month > as.numeric("2") & Month < as.numeric("6") ~ "spring",
+                       Month == as.numeric("12") | Month == as.numeric("1") | Month == as.numeric("2")  ~ "winter",
+                       Month > as.numeric("8") & Month < as.numeric("12") ~ "fall"
+    )) %>% 
   drop_na()
 
 
-
 # create function to calculate the amount of salt stored in the wetland (mfen). Initial mfen = 0
-saltFlux = monthlyFull$dMfen
+saltFlux = monthlyFull$dMfen # can replace with dMfen_corrected
+saltFlux2 = monthlyFull$dMfen_corrected
+
 saltStored <- function(q){
   mfen <- 0
   for (i in 1:length(q)){
@@ -355,12 +555,19 @@ saltStored <- function(q){
 }
 
 cumulSalt <- as_tibble(saltStored(q = saltFlux)) %>% 
-  mutate(rownum = row_number())
+  mutate(rownum = row_number()) %>% 
+  dplyr::rename(Mfen = value)
+
+cumulSalt2 = as_tibble(saltStored(q = saltFlux2)) %>% 
+  mutate(rownum = row_number())%>% 
+  dplyr::rename(Mfen_corrected = value)
 
 # join the cumulSalt df with the monthly full
 monthlyFull <- monthlyFull %>% 
   right_join(cumulSalt, by = c("rownum" = "rownum")) %>% 
-  rename(Mfen = value) 
+  right_join(cumulSalt2, by = c("rownum" = "rownum"))
+ 
+
 
 
 
@@ -373,6 +580,7 @@ annualAccumulation <- monthlyFull %>%
   summarise(`Total Precipitation (inch)` = sum(totalmonthPrecip),
             `Average Discharge - KB-300 (cfs)` = mean(monthDischargeKB300),
             `Average Discharge - KB-175 (cfs)` = mean(monthDischargeKB175),
+            `Average Discharge - KB-175 (cfs)_corrected` = mean(monthDischargeKB175_corrected),
             #`Average Discharge - KB100 (cfs)` = mean(monthDischargeKB100),
             #`Average Discharge - KB150 (cfs)` = mean(monthDischargeKB150),
             `Total Applied Cl - I90 (kg)` = sum(monthSaltapplied),
@@ -381,14 +589,30 @@ annualAccumulation <- monthlyFull %>%
             `KB175 Cl (kg)_corrected` = round(sum(monthlyCl_kb175_corrected)),
             `Ave Flux Concentration - KB175 (mg/L)` =  ((`KB175 Cl (kg)`*1000000)/(`Average Discharge - KB-175 (cfs)`*31536000))/28.316,
             `Ave Flux Concentration - KB175 (mg/L)_corrected` =  ((`KB175 Cl (kg)_corrected`*1000000)/(`Average Discharge - KB-175 (cfs)`*31536000))/28.316,
-            `Total Cl Stored in fen` = sum(dMfen)) %>%  # calculated from KB175 Cl (kg)_corrected 
-  mutate(`Fen area` = round(`Total Cl Stored in fen`)) %>%  # thousands of kgs
+            #`% Exported Chloride` = (`KB175 Cl (kg)`/`Total Applied Cl - I90 (kg)`)*100,
+            #`% Exported Chloride Corrected` = (`KB175 Cl (kg)_corrected`/`Total Applied Cl - I90 (kg)`)*100,
+            `Total Cl Stored in fen` = sum(dMfen),
+            `Total Cl Stored in fen_corrected` = sum(dMfen_corrected)) %>%  # calculated from KB175 Cl (kg)_corrected 
+  #mutate(`Fen area` = round(`Total Cl Stored in fen`)) %>%  # thousands of kgs
   drop_na()        
 
+monthlyFull %>% 
+  mutate(waterYear = case_when(monthYear > "Sep 2017" & monthYear < "Oct 2018" ~ "2018",
+                               monthYear  > "Sep 2018" & monthYear < "Oct 2019" ~ "2019",
+                               monthYear > "Sep 2019" & monthYear < "Oct 2020" ~ "2020")) %>% 
+  group_by(waterYear) %>% 
+  summarise(`Average Discharge - KB-300 (cfs)` = mean(monthDischargeKB300),
+            `KB300 Cl (kg)` = round(sum(monthlyCl_kb300)),
+            `Ave Flux Concentration - KB175 (mg/L)` =  ((`KB300 Cl (kg)`*1000000)/(`Average Discharge - KB-300 (cfs)`*31536000))/28.316)
+            
+   
+
+
+
 # save annual accumulation, monthlyFull and daily flux
-#write_csv(annualAccumulation, "results/tables/annualAccumulation.csv")
-#write_csv(monthlyFull, "results/tables/monthly_values.csv")
-#write_csv(daily_vals_full, "results/tables/daily_values.csv")
+write_csv(annualAccumulation, "results/tables/annualAccumulation.csv")
+write_csv(monthlyFull, "results/tables/monthly_values.csv")
+write_csv(daily_vals_full, "results/tables/daily_values.csv")
 
 
 
