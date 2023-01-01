@@ -218,7 +218,7 @@ daily_specific_conductance <- dailyScaleFull %>%
   ggplot(aes(x= date))+
   geom_line(aes(y = dailySC_KB100, color = "KB100"))+
   geom_line(aes(y = dailySC_KB150, color = "KB150"))+
-  geom_line(aes(y = dailySC_KB300, color = "KB300"))+
+  geom_line(aes(y = dailySC_KB300, color = "KB300"))+ 
   scale_color_manual(values = safe_colorblind_palette, labels = c("KB100", "KB150", "KB300"))+
   #scale_fill_tron()+
   geom_vline(xintercept = as.numeric(as.Date("2020-05-01")), colour = "red", alpha = .9, size = .5, linetype = "dashed") +
