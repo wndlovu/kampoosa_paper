@@ -73,3 +73,10 @@ following files contain the compiled data for this time frame.
   MassDOT and calculations for the amount of salt applied to the 1.2
   mile stretch of the Turnpike impacting the Kampoosa watershed. Data
   split into sheets with calculations for each water-year (2018 -2020)
+
+#### COLLABORATORS
+
+[Dr. Drew Guswa](https://www.smith.edu/academics/faculty/andrew-guswa)
+
+[Dr. Amy
+Rhodes](https://www.smith.edu/academics/faculty/amy-larson-rhodes)

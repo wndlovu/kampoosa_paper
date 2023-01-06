@@ -11,19 +11,19 @@ knitr::opts_chunk$set(
 )
 ```
 
-$$\\[.1in]$$
+
 
 Data for this study was collected from Nov 2017 to Dec 2020. The following files contain the compiled data for this time frame.
 
 
-$$\\[.1in]$$
+
 
 #### DETAILED SAMPLING METHODS
 
 - `sampling_technique.docx`: documentation of the methods used by
   UMass engineers to collect field data
 
-$$\\[.1in]$$
+
 
 #### WEATHER DATA
 
@@ -40,11 +40,11 @@ $$\\[.1in]$$
   Period rain (inch), Monthly Total Cumalative Rain (inch) and Anual Cumulative Rain (inch). Data collected from 1/1/19 6:00 to 12/31/19 23:59
 
 
-$$\\[.1in]$$
+
 
 #### WATER QUALITY AND STREAM FLOW DATA
 
-$$\\[.05in]$$
+
 
 ##### HOBO stream flow and Na and Cl mass fluxes
 - `KB100_2017_2020.xlsx`: Water quality and stream flow data at KB100 (15 minute interval)
@@ -82,11 +82,17 @@ $$\\[.05in]$$
   sites.
 
 
-$$\\[.1in]$$
+
 
 #### SALT APPLICATION 
 
   - `Kampoosa_I-90.xlsx`: road salt application data provided by
     the MassDOT and calculations for the amount of salt applied to the
     1.2 mile stretch of the Turnpike impacting the Kampoosa watershed. Data split into sheets with calculations for each water-year (2018 -2020)
+
+
+#### COLLABORATORS
+[Dr. Drew Guswa](https://www.smith.edu/academics/faculty/andrew-guswa)
+
+[Dr. Amy Rhodes](https://www.smith.edu/academics/faculty/amy-larson-rhodes)
 
