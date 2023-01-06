@@ -61,7 +61,7 @@ monthyear <- as.data.frame(monthlyFull$monthYear) %>%
 
 clAppl_exp_accum <- ggplot(monthlyFull_tve_export, aes(x = monthYear))+
   geom_bar(aes(y=salt_value, fill = salt_name),stat = "identity", position = position_dodge(width =0.035), width =.1, color = 'black')+
-  geom_vline(xintercept =as.yearmon(c("Oct 2019", "Oct 2018", "Oct 2020")), colour = "grey20", alpha = .9, size = .5, linetype = "dashed") +
+  geom_vline(xintercept =as.yearmon(c("Oct 2019", "Oct 2018", "May 2020")), colour = "grey20", alpha = .9, size = .5, linetype = "dashed") +
   geom_line(aes(y = Mfen_corrected/2.5), color = "brown4", alpha = .9, size=.9)+
   theme(axis.title.x = element_blank(),
         legend.title = element_blank(),
@@ -82,7 +82,7 @@ clAppl_exp_accum <- ggplot(monthlyFull_tve_export, aes(x = monthYear))+
                      sec.axis = sec_axis(~.*2.5, breaks = seq(0,350000,50000), name = "Chloride Accumulation in fen (kg)"))+
   annotate("text", as.yearmon("Apr 2018"), y = 105000, label = "2018", colour = "black", size = 6)+
   annotate("text", as.yearmon("Apr 2019"), y = 105000, label =  "2019", colour = "black", size = 6)+
-  annotate("text", as.yearmon("May 2020"), y = 105000, label =  "2020", colour = "black", size = 6)+
+  annotate("text", as.yearmon("Feb 2020"), y = 105000, label =  "2020", colour = "black", size = 6)+
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5),
         axis.text.y.right = element_text(size = 15, color = "brown4"),
         axis.line.y.right = element_line(color = "brown4"),
