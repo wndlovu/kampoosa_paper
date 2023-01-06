@@ -1,17 +1,11 @@
 
-$$\\[.1in]$$
-
 Data for this study was collected from Nov 2017 to Dec 2020. The
 following files contain the compiled data for this time frame.
-
-$$\\[.1in]$$
 
 #### DETAILED SAMPLING METHODS
 
 - `sampling_technique.docx`: documentation of the methods used by UMass
   engineers to collect field data
-
-$$\\[.1in]$$
 
 #### WEATHER DATA
 
@@ -30,11 +24,7 @@ $$\\[.1in]$$
   Cumalative Rain (inch) and Anual Cumulative Rain (inch). Data
   collected from 1/1/19 6:00 to 12/31/19 23:59
 
-$$\\[.1in]$$
-
 #### WATER QUALITY AND STREAM FLOW DATA
-
-$$\\[.05in]$$
 
 ##### HOBO stream flow and Na and Cl mass fluxes
 
@@ -76,8 +66,6 @@ $$\\[.05in]$$
 
 - `ion_data.xlsx`: monthly groundwater ion chemistry data measured from
   grab samples collected at the wells in the fen and the gauge sites.
-
-$$\\[.1in]$$
 
 #### SALT APPLICATION
 
