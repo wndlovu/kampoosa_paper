@@ -22,7 +22,6 @@ airTemp <- read_csv("data/airTemp.csv") %>%
   select(date, airtempr)
 
 
-
 # read in rainfall data
 rainfall2017 <- read_excel("data/KB100_2017_rainfall.xlsx", 
                            col_types = c("date", "date", "numeric", 

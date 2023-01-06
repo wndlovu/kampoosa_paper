@@ -28,12 +28,14 @@ ionDataStreams <- ionDataSummary %>%
 
 # create a df showing the Cl in the fen area (use well data). AS, BS and CS are surface water - welldepth = 0
 wells <- ionDataSummary %>% 
+  #filter(Date <= 2020-04-31) %>% 
   filter(WellID %in% c("AA", "AB", "AC", "BA", "BB", "BC", "CA", "CB", "CC", "AS", "BS", "CS")) %>% # remove surface water samples
   mutate(IDgroup = case_when(WellID == "AA" |WellID == "AB"|WellID ==  "AC"|WellID ==  "AS"  ~ "A",
                              WellID == "BA" |WellID == "BB"|WellID ==  "BC"|WellID ==  "BS" ~ "B",
                              WellID == "CA" |WellID == "CB"|WellID ==  "CC"|WellID ==  "CS" ~ "C"),
          Date = as.Date(Date), # change from .dttm to date
-         depth = paste0(WellDepth_ft, "ft"))
+         depth = paste0(WellDepth_ft, "ft")) %>% 
+  filter(Date <= as.Date("2020-03-17"))
   
 
 

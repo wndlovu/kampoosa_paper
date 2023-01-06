@@ -27,7 +27,7 @@ Kampoosa Bog is a 70ha wetland complex located in Stockbridge-Lee MA that is cur
 ### Packages and Dependancies
 
 ```{r, eval=FALSE}
-install.packages(c("tidyverse", "readxl", "lubridate", 
+install.packages(c("tidyverse", "readxl", "lubridate", "anytime", 
 "gtools", "zoo", "stringr", "forecast", "fable", "kernlab", "ggthemr",
 "ggthemes", "ggpubr", "rrandomcoloR",  "gridExtra", "ggpattern",
 "glue", "ggtext", "tibble", "cowplot",  "readr", "grid", "directlabels",
