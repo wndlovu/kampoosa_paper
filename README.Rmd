@@ -43,7 +43,7 @@ documents.
 
 To reproduce analysis, follow these these guidelines:
 
-1) Run [**Discharge with area and precip+evap.R**](https://github.com/wndlovu/kampoosa_paper/blob/main/analysis/Discharge%20with%20area%20and%20precip%2Bevap.R) to upload raw data and calculate daily, monthly and annual summaries for weather and stream gauges.
+1) Run [**stream_weather**](https://github.com/wndlovu/kampoosa_paper/blob/main/analysis/stream_weather.R) to upload raw data and calculate daily, monthly and annual summaries for weather and stream gauges.
 
 2) Run [**groundwater_wells.R**](https://github.com/wndlovu/kampoosa_paper/blob/main/analysis/groundwater_wells.R) to extract grab sample chloride concentrations at wells A, B and C.
 

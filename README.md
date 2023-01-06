@@ -18,7 +18,7 @@ are recorded at a 15 minute interval as of Nov 2017.
 ### Packages and Dependancies
 
 ``` r
-install.packages(c("tidyverse", "readxl", "lubridate", 
+install.packages(c("tidyverse", "readxl", "lubridate", "anytime", 
 "gtools", "zoo", "stringr", "forecast", "fable", "kernlab", "ggthemr",
 "ggthemes", "ggpubr", "rrandomcoloR",  "gridExtra", "ggpattern",
 "glue", "ggtext", "tibble", "cowplot",  "readr", "grid", "directlabels",
@@ -33,8 +33,8 @@ documents.
 
 To reproduce analysis, follow these these guidelines:
 
-1)  Run [**Discharge with area and
-    precip+evap.R**](https://github.com/wndlovu/kampoosa_paper/blob/main/analysis/Discharge%20with%20area%20and%20precip%2Bevap.R)
+1)  Run
+    [**stream_weather**](https://github.com/wndlovu/kampoosa_paper/blob/main/analysis/stream_weather.R)
     to upload raw data and calculate daily, monthly and annual summaries
     for weather and stream gauges.
 
