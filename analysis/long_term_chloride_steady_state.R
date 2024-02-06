@@ -2,7 +2,7 @@ library(tidyverse)
 library(readr)
 
 # annaul cl application from 2012 - 2019
-cl_applied <- read_csv("data/historic_salt_application_v2.csv")
+cl_applied <- read_csv("results/tables/historic_salt_application_v2.csv")
 precip <- read_csv("data/Kampoosa_Precip_2012_2020.csv")
 monthly_values <- read_csv("results/tables/monthly_values.csv")
 

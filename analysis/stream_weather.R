@@ -482,16 +482,15 @@ gauges_full <- gauges_full %>%
 daily_vals_full <- gauges_full %>% 
   mutate(date = as.Date(Standard_Date_Time)) %>% 
   dplyr::group_by(date) %>%  
-  dplyr::summarize(#dailyDischarge_KB100 = median(m3s_KB100), 
-            #dailyDischarge_KB150 = median(m3s_KB100), 
-            #dailyDischarge_KB175 = median(m3s_KB100),   #  DailyMeanFlow
-            #dailyDischarge_KB175_corrected = mean(m3_15min_KB175),
-            #dailyDischarge_KB300 = median(m3s_KB100),  
-            #dailyDischarge_MB100 = median(m3s_KB100), 
+  dplyr::summarize(
             totalDischarge_KB100 = sum(m3_15min_KB100),
             totalDischarge_KB150 = sum(m3_15min_KB150),
             totalDischarge_KB300 = sum(m3_15min_KB300),
             totalDischarge_KB175 = sum(m3_15min_KB175),
+            dailyDischarge_KB100 = totalDischarge_KB100/86400, # m3/s
+            dailyDischarge_KB150 = totalDischarge_KB150/86400, # m3/s
+            dailyDischarge_KB175 = totalDischarge_KB175/86400, # m3/s
+            dailyDischarge_KB300 = totalDischarge_KB300/86400, # m3/s
             dailyStage_KB100 = mean(stageKB100_m),
             dailyStage_KB150 = mean(stageKB150_m),
             dailyStage_KB300 = mean(stageKB300_m),
@@ -588,13 +587,6 @@ monthlyFull <- daily_vals_full %>%
             totalDischargeKB150 = sum(totalDischarge_KB150, na.rm = TRUE),
             totalDischargeKB300 = sum(totalDischarge_KB300, na.rm = TRUE),
             totalDischargeKB175 = sum(totalDischarge_KB175, na.rm = TRUE),
-            monthDischargeKB100 = median(dailyDischarge_KB100, na.rm = TRUE),
-            totalDischargeKB100 = sum(totalDischarge_KB100, na.rm = TRUE),
-            monthDischargeKB150 = median(dailyDischarge_KB150, na.rm = TRUE),
-            monthDischargeKB175 = median(dailyDischarge_KB175, na.rm = TRUE),
-            #monthDischargeKB175_corrected = sum(dailyDischarge_KB175_corrected, na.rm = TRUE),
-            monthDischargeKB300 = median(dailyDischarge_KB300, na.rm = TRUE),
-            monthDischargeMB100 = median(dailyDischarge_MB100, na.rm = TRUE),
             monthlyCl_kb100 = sum(totalClkg_KB100), # monthlyCl
             monthlyCl_kb150 = sum(totalClkg_KB150),
             monthlyCl_kb175 = sum(totalClkg_KB175),
