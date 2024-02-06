@@ -60,8 +60,3 @@ as either
 or
 [**visuals**](https://github.com/wndlovu/kampoosa_paper/tree/main/results/visuals)
 
-### Additional Analysis
-
-Supplementary data analysis can be found in the
-[**additional_analysis**](https://github.com/wndlovu/kampoosa_paper/tree/main/results/tables)
-folder.
