@@ -43,6 +43,14 @@ To reproduce analysis, follow these these guidelines:
     to extract grab sample chloride concentrations at wells A, B and C.
 
 3)  Run
+    [**salt_application_full.R**](https://github.com/wndlovu/kampoosa_paper/blob/main/analysis/salt_application_full.R)
+    to calculate chloride mass balance for 2012 - 2020.
+
+3)  Run
+    [**long_term_chloride_steady_state.R**](https://github.com/wndlovu/kampoosa_paper/blob/main/analysis/long_term_chloride_steady_state.R)
+    to calculate changes in chloride steady state concentration (2012 - 2019)
+    
+5)  Run
     [**visuals.R**](https://github.com/wndlovu/kampoosa_paper/blob/main/analysis/visuals.R)
     to reproduce all visuals in manuscript.
 
