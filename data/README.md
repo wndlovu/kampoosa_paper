@@ -1,6 +1,6 @@
 
-Data for this study was collected from Nov 2017 to Dec 2020. The
-following files contain the compiled data for this time frame.
+Data for this study was collected ranging from Jan 2012 to March 2023.
+The following files contain the compiled data for this time frame.
 
 #### DETAILED SAMPLING METHODS
 
@@ -23,6 +23,9 @@ following files contain the compiled data for this time frame.
 - `KB100_2019_rainfall.xlsx`: Period rain (inch), Monthly Total
   Cumalative Rain (inch) and Anual Cumulative Rain (inch). Data
   collected from 1/1/19 6:00 to 12/31/19 23:59
+- `Kampoosa_Precip_2012_2020.xlsx`: Daily precipitation data from the
+  MA-BE-3 weather station located in Stockbridge, MA from 2012-01-01 to
+  2020-12-31
 
 #### WATER QUALITY AND STREAM FLOW DATA
 
@@ -35,6 +38,9 @@ following files contain the compiled data for this time frame.
   (15 minute interval)
 
 - `KB300_2017_2020.xlsx`: Water quality and stream flow data at KB300
+  (15 minute interval)
+
+- `MB100_2017_2020.xlsx`: Water quality and stream flow data at MB100
   (15 minute interval)
 
   Variables
@@ -56,6 +62,8 @@ following files contain the compiled data for this time frame.
 
 - `kb300Temperature.xlsx`
 
+- `mb100Temperature.xlsx`
+
   Variables
 
   - `fullRange_uS.cm`
@@ -70,9 +78,23 @@ following files contain the compiled data for this time frame.
 #### SALT APPLICATION
 
 - `Kampoosa_I-90.xlsx`: road salt application data provided by the
-  MassDOT and calculations for the amount of salt applied to the 1.2
-  mile stretch of the Turnpike impacting the Kampoosa watershed. Data
-  split into sheets with calculations for each water-year (2018 -2020)
+  MassDOT and calculations for the amount of salt applied to the 20.8
+  mile stretch of I-90 impacting the Kampoosa watershed. Data split into
+  sheets with calculations for each water-year (2018 - 2020)
+  - `Kampoosa I-90_2011_2023.xlsx`: road salt application data provided
+    by the MassDOT and calculations for the amount of salt applied to
+    the 20.8 mile stretch of I-90 impacting the Kampoosa watershed. Data
+    split into sheets with calculations for each water-year (2011 -
+    2023)
+  - `Kampoosa_Rte-7.xlsx`: road salt application data provided by the
+    MassDOT and calculations for the amount of salt applied to the 19.27
+    mile stretch of I-90 impacting the Kampoosa watershed. Data split
+    into sheets with calculations for each water-year (2018 - 2020)
+  - `Kampoosa Rte 7_2011_2023.xlsx`: road salt application data provided
+    by the MassDOT and calculations for the amount of salt applied to
+    the 19.27 mile stretch of I-90 impacting the Kampoosa watershed.
+    Data split into sheets with calculations for each water-year (2011 -
+    2023)
 
 #### COLLABORATORS
 
